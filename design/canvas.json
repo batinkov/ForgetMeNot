@@ -1,0 +1,14 @@
+{
+  "artboards": [
+    { "file": "Main.dc.html", "x": 0, "y": 0, "w": 390, "h": 844, "title": "Mobile — day view", "is_interactive": true },
+    { "file": "Empty.dc.html", "x": 470, "y": 0, "w": 390, "h": 844, "title": "Mobile — nothing today" },
+    { "file": "Tablet.dc.html", "x": 940, "y": 0, "w": 834, "h": 1112, "title": "Tablet — day view", "is_interactive": true },
+    { "file": "Desktop.dc.html", "x": 0, "y": 1252, "w": 1440, "h": 900, "title": "Desktop — day view", "is_interactive": true },
+    { "file": "Cards.dc.html", "x": 1560, "y": 1252, "w": 700, "h": 1500, "title": "Card vocabulary" }
+  ],
+  "annotations": [
+    { "id": "brief", "x": 0, "y": -190, "w": 430, "text": "Quiet paper — Newsreader over Karla on a warm ground.\n\nTap any circle to mark a card done: it fades and the mark fills in the category accent. Tap again to undo.\n\nSample names are placeholders." },
+    { "id": "deferred", "x": 0, "y": 1010, "w": 430, "text": "Deferred on purpose: done cards stay in place (ordering is still open), and the Next line is drawn but not wired." }
+  ],
+  "launch": { "view": "canvas" }
+}

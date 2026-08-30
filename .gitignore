@@ -1,0 +1,21 @@
+# Gradle
+.gradle/
+.gradle-home/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+
+# IntelliJ / Android Studio
+.idea/
+*.iml
+*.ipr
+*.iws
+local.properties
+
+# OS
+.DS_Store
+
+# Kotlin
+.kotlin/
+
+# Seeded design canvas (large generated file; the .dc.html artboards are the source)
+design/forgetmenot-day-view.html

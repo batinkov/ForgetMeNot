@@ -1,0 +1,130 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,300;6..72,400;6..72,500&family=Karla:wght@400;500;600;700&display=swap">
+  <style>
+    body { margin: 0; font-family: Karla, 'Helvetica Neue', Arial, sans-serif; }
+    * { box-sizing: border-box; }
+    a { color: oklch(0.50 0.09 252); }
+    a:hover { color: oklch(0.42 0.09 252); }
+    button { font: inherit; }
+  </style>
+</helmet>
+<div style="width:834px;height:1112px;background:#FBF8F2;display:flex;flex-direction:column;align-items:center;">
+
+  <div style="width:100%;max-width:620px;padding:72px 32px 22px 32px;display:flex;flex-direction:column;gap:9px;">
+    <div style="font-size:11px;font-weight:600;letter-spacing:0.15em;text-transform:uppercase;color:#9A9085;">Saturday</div>
+    <div style="font-family:Newsreader,Georgia,serif;font-size:48px;font-weight:400;line-height:1;color:#211D19;">18 January</div>
+  </div>
+
+  <div style="width:100%;max-width:620px;padding:0 32px;"><div style="height:1px;background:#EAE2D5;"></div></div>
+
+  <div style="width:100%;max-width:620px;flex:1;display:flex;flex-direction:column;gap:11px;padding:24px 32px;">
+
+    <div style="background:#FFFDF9;border:1px solid #EAE2D5;border-radius:5px;padding:17px 16px 17px 18px;display:flex;gap:15px;align-items:flex-start;opacity:{{n1.op}};transition:opacity 240ms ease;">
+      <div style="flex:none;color:oklch(0.50 0.09 148);margin-top:2px;">
+        <svg width="21" height="21" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M10 17.2V7"></path><path d="M10 11.2c0-2.3 1.9-4.2 4.2-4.2 0 2.3-1.9 4.2-4.2 4.2z"></path><path d="M10 14.6c0-2.3-1.9-4.2-4.2-4.2 0 2.3 1.9 4.2 4.2 4.2z"></path></svg>
+      </div>
+      <div style="flex:1;display:flex;flex-direction:column;gap:5px;min-width:0;">
+        <div style="font-size:10px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:oklch(0.50 0.09 148);">Nameday</div>
+        <div style="font-family:Newsreader,Georgia,serif;font-size:25px;font-weight:400;line-height:1.15;color:#211D19;">Atanasovden</div>
+        <div style="font-size:13.5px;color:#6A6158;line-height:1.5;">Atanas &middot; Nasko &middot; Nadya &middot; Tanya</div>
+      </div>
+      <button onClick="{{n1.toggle}}" style="width:44px;height:44px;margin:-10px -12px -10px 0;border:none;background:none;padding:0;display:flex;align-items:center;justify-content:center;cursor:pointer;flex:none;">
+        <span style="{{n1.dot}}"><sc-if value="{{n1.checked}}" hint-placeholder-val="{{ true }}"><svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="#FFFDF9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.7 6.9l2.6 2.6 5.1-6"></path></svg></sc-if></span>
+      </button>
+    </div>
+
+    <div style="background:#FFFDF9;border:1px solid #EAE2D5;border-radius:5px;padding:17px 16px 17px 18px;display:flex;gap:15px;align-items:flex-start;opacity:{{f1.op}};transition:opacity 240ms ease;">
+      <div style="flex:none;color:oklch(0.50 0.09 318);margin-top:2px;">
+        <svg width="21" height="21" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2.9v14.4"></path><path d="M7.3 5.9h5.4"></path><path d="M5.6 9.1h8.8"></path><path d="M7.4 13.6l5.2-1.7"></path></svg>
+      </div>
+      <div style="flex:1;display:flex;flex-direction:column;gap:5px;min-width:0;">
+        <div style="font-size:10px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:oklch(0.50 0.09 318);">Feast</div>
+        <div style="font-family:Newsreader,Georgia,serif;font-size:25px;font-weight:400;line-height:1.15;color:#211D19;">St Athanasius the Great</div>
+        <div style="font-size:13.5px;color:#6A6158;line-height:1.5;">Patriarch of Alexandria, defender of the Nicene creed.</div>
+      </div>
+      <button onClick="{{f1.toggle}}" style="width:44px;height:44px;margin:-10px -12px -10px 0;border:none;background:none;padding:0;display:flex;align-items:center;justify-content:center;cursor:pointer;flex:none;">
+        <span style="{{f1.dot}}"><sc-if value="{{f1.checked}}" hint-placeholder-val="{{ true }}"><svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="#FFFDF9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.7 6.9l2.6 2.6 5.1-6"></path></svg></sc-if></span>
+      </button>
+    </div>
+
+    <div style="background:#FFFDF9;border:1px solid #EAE2D5;border-radius:5px;padding:17px 16px 17px 18px;display:flex;gap:15px;align-items:flex-start;opacity:{{b1.op}};transition:opacity 240ms ease;">
+      <div style="flex:none;color:oklch(0.54 0.10 62);margin-top:2px;">
+        <svg width="21" height="21" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><rect x="3.2" y="10.4" width="13.6" height="6.2" rx="1.3"></rect><path d="M10 10.4V7.4"></path><path d="M10 3.6c1 1.1 1 2 0 2.6-1-.6-1-1.5 0-2.6z"></path><path d="M3.2 13.4h13.6"></path></svg>
+      </div>
+      <div style="flex:1;display:flex;flex-direction:column;gap:5px;min-width:0;">
+        <div style="font-size:10px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:oklch(0.54 0.10 62);">Birthday</div>
+        <div style="font-family:Newsreader,Georgia,serif;font-size:25px;font-weight:400;line-height:1.15;color:#211D19;">Maria Ivanova</div>
+        <div style="font-size:13.5px;color:#6A6158;line-height:1.5;">Turning 34</div>
+      </div>
+      <button onClick="{{b1.toggle}}" style="width:44px;height:44px;margin:-10px -12px -10px 0;border:none;background:none;padding:0;display:flex;align-items:center;justify-content:center;cursor:pointer;flex:none;">
+        <span style="{{b1.dot}}"><sc-if value="{{b1.checked}}" hint-placeholder-val="{{ true }}"><svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="#FFFDF9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.7 6.9l2.6 2.6 5.1-6"></path></svg></sc-if></span>
+      </button>
+    </div>
+
+    <div style="background:#FDFAF5;border:1px solid #EDE6DB;border-radius:5px;padding:17px 16px 17px 18px;display:flex;gap:15px;align-items:flex-start;opacity:{{m1.op}};transition:opacity 240ms ease;">
+      <div style="flex:none;color:oklch(0.52 0.02 275);margin-top:2px;">
+        <svg width="21" height="21" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M10 3.4c1.7 1.9 2.5 3.2 2.5 4.4a2.5 2.5 0 0 1-5 0c0-1.2.8-2.5 2.5-4.4z"></path><path d="M10 10.4v6.2"></path><path d="M7.3 16.6h5.4"></path></svg>
+      </div>
+      <div style="flex:1;display:flex;flex-direction:column;gap:5px;min-width:0;">
+        <div style="font-size:10px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:oklch(0.52 0.02 275);">In memory</div>
+        <div style="font-family:Newsreader,Georgia,serif;font-size:25px;font-weight:300;line-height:1.15;color:#3A342E;">Dimitar Petrov</div>
+        <div style="font-size:13.5px;color:#8A8078;line-height:1.5;">12 years since</div>
+      </div>
+      <button onClick="{{m1.toggle}}" style="width:44px;height:44px;margin:-10px -12px -10px 0;border:none;background:none;padding:0;display:flex;align-items:center;justify-content:center;cursor:pointer;flex:none;">
+        <span style="{{m1.dot}}"><sc-if value="{{m1.checked}}" hint-placeholder-val="{{ true }}"><svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="#FFFDF9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.7 6.9l2.6 2.6 5.1-6"></path></svg></sc-if></span>
+      </button>
+    </div>
+
+  </div>
+
+  <div style="width:100%;max-width:620px;padding:0 32px 44px 32px;">
+    <div style="border-top:1px solid #EAE2D5;padding-top:16px;display:flex;gap:9px;align-items:baseline;">
+      <span style="font-size:10px;font-weight:600;letter-spacing:0.15em;text-transform:uppercase;color:#9A9085;flex:none;">Next</span>
+      <span style="font-size:13.5px;color:#6A6158;">Mum&#39;s birthday, in 6 days</span>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+<script data-dc-script data-props='{"$preview":{"width":834,"height":1112}}'>
+class Component extends DCLogic {
+  doneMap() {
+    if (this.state && this.state.done) { return this.state.done; }
+    return { f1: true };
+  }
+  mk(id, accent) {
+    const map = this.doneMap();
+    const done = !!map[id];
+    const self = this;
+    const base = 'width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;transition:background 180ms ease, border-color 180ms ease;border:1px solid ';
+    return {
+      op: done ? '0.4' : '1',
+      checked: done,
+      dot: done ? base + accent + ';background:' + accent + ';' : base + '#DCD3C5;background:transparent;',
+      toggle: function () {
+        const next = Object.assign({}, map);
+        next[id] = !done;
+        self.setState({ done: next });
+      }
+    };
+  }
+  renderVals() {
+    return {
+      n1: this.mk('n1', 'oklch(0.50 0.09 148)'),
+      f1: this.mk('f1', 'oklch(0.50 0.09 318)'),
+      b1: this.mk('b1', 'oklch(0.54 0.10 62)'),
+      m1: this.mk('m1', 'oklch(0.52 0.02 275)')
+    };
+  }
+}
+</script>
+</body>
+</html>
