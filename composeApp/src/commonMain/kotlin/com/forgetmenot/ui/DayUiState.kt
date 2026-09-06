@@ -1,6 +1,7 @@
 package com.forgetmenot.ui
 
 import com.forgetmenot.domain.ReminderEvent
+import com.forgetmenot.domain.UpcomingEvent
 import kotlinx.datetime.LocalDate
 
 /** Everything the day view renders, and nothing it has to work out for itself. */
@@ -8,6 +9,8 @@ data class DayUiState(
     val date: LocalDate,
     val events: List<ReminderEvent> = emptyList(),
     val done: Set<ReminderEvent> = emptySet(),
+    /** The next few days' worth, for lead time. Never includes [date] itself. */
+    val upcoming: List<UpcomingEvent> = emptyList(),
     val load: LoadState = LoadState.Loading,
 )
 

@@ -37,6 +37,11 @@
       "name": "Богдана"
     },
     {
+      "date": "1994-09-17",
+      "category": "BIRTHDAY",
+      "name": "Пламен"
+    },
+    {
       "date": "--01-06",
       "category": "NAMEDAY",
       "name": "Йордановден",
@@ -125,6 +130,11 @@
       "name": "Баба Върба"
     },
     {
+      "date": "2009-09-17",
+      "category": "MEMORIAL",
+      "name": "Дядо Стоян"
+    },
+    {
       "date": "2021-08-01",
       "category": "CUSTOM",
       "name": "Нов дом"
@@ -133,6 +143,11 @@
       "date": "--03-08",
       "category": "CUSTOM",
       "name": "Първа среща"
+    },
+    {
+      "date": "--09-17",
+      "category": "CUSTOM",
+      "name": "Ново начало"
     }
   ]
 }

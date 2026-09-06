@@ -3,6 +3,7 @@ package com.forgetmenot.ui
 import com.forgetmenot.data.EventRepository
 import com.forgetmenot.domain.ReminderEvent
 import com.forgetmenot.domain.on
+import com.forgetmenot.domain.upcoming
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -43,7 +44,11 @@ class DayViewState(
                 .collect { loaded ->
                     all = loaded
                     _state.update {
-                        it.copy(events = all.on(it.date), load = LoadState.Ready)
+                        it.copy(
+                            events = all.on(it.date),
+                            upcoming = all.upcoming(it.date),
+                            load = LoadState.Ready,
+                        )
                     }
                 }
         }
@@ -51,7 +56,14 @@ class DayViewState(
 
     /** Done is per-day, so moving the date clears it — the correct lifetime for it. */
     fun showDate(date: LocalDate) {
-        _state.update { it.copy(date = date, events = all.on(date), done = emptySet()) }
+        _state.update {
+            it.copy(
+                date = date,
+                events = all.on(date),
+                upcoming = all.upcoming(date),
+                done = emptySet(),
+            )
+        }
     }
 
     fun showPreviousDay() = showDate(_state.value.date.minus(1, DateTimeUnit.DAY))

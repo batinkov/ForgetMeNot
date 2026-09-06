@@ -31,6 +31,14 @@ fun ReminderEvent.countLabel(on: LocalDate): String? {
     }
 }
 
+/**
+ * How long you have, counted from the day being shown rather than from the real
+ * today. Deliberately never "Tomorrow": that word is anchored to the present, so
+ * on any day but today it names the wrong date.
+ */
+fun countdownLabel(daysAway: Int): String =
+    if (daysAway == 1) "In 1 day" else "In $daysAway days"
+
 private fun ordinal(n: Int): String {
     if (n % 100 in 11..13) return "th"
     return when (n % 10) {

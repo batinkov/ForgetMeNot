@@ -1,16 +1,21 @@
 package com.forgetmenot.ui
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -25,6 +30,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
@@ -35,6 +41,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import com.forgetmenot.domain.ReminderEvent
+import com.forgetmenot.domain.UpcomingEvent
+import com.forgetmenot.domain.countdownLabel
 import com.forgetmenot.domain.on
 import kotlinx.datetime.LocalDate
 
@@ -65,6 +73,8 @@ data class DayMetrics(
     val iconSize: Dp,
     val iconGap: Dp,
     val markSize: Dp,
+    val upcomingIconSize: Dp,
+    val upcomingMaxHeight: Dp,
     val cardPadding: PaddingValues,
     val cardGap: Dp,
     val screenPadding: Dp,
@@ -90,6 +100,8 @@ data class DayMetrics(
             iconSize = 20.dp,
             iconGap = 13.dp,
             markSize = 26.dp,
+            upcomingIconSize = 15.dp,
+            upcomingMaxHeight = 170.dp,
             cardPadding = PaddingValues(horizontal = 16.dp, vertical = 15.dp),
             cardGap = 10.dp,
             screenPadding = 24.dp,
@@ -112,6 +124,8 @@ data class DayMetrics(
             iconSize = 23.dp,
             iconGap = 15.dp,
             markSize = 28.dp,
+            upcomingIconSize = 16.dp,
+            upcomingMaxHeight = 200.dp,
             cardPadding = PaddingValues(horizontal = 19.dp, vertical = 18.dp),
             cardGap = 12.dp,
             screenPadding = 36.dp,
@@ -133,6 +147,8 @@ data class DayMetrics(
             iconSize = 26.dp,
             iconGap = 18.dp,
             markSize = 32.dp,
+            upcomingIconSize = 18.dp,
+            upcomingMaxHeight = 280.dp,
             cardPadding = PaddingValues(horizontal = 24.dp, vertical = 22.dp),
             cardGap = 14.dp,
             screenPadding = 64.dp,
@@ -228,6 +244,12 @@ private fun StackedDay(
                 .weight(1f)
                 .padding(horizontal = m.screenPadding, vertical = 22.dp),
         )
+
+        ComingUp(
+            upcoming = state.upcoming,
+            m = m,
+            modifier = measure.padding(horizontal = m.screenPadding, vertical = 20.dp),
+        )
     }
 }
 
@@ -245,7 +267,7 @@ private fun RailDay(
         horizontalArrangement = Arrangement.spacedBy(64.dp),
     ) {
         Column(
-            modifier = Modifier.width(m.railWidth),
+            modifier = Modifier.width(m.railWidth).fillMaxHeight(),
             verticalArrangement = Arrangement.spacedBy(34.dp),
         ) {
             Text(
@@ -257,15 +279,8 @@ private fun RailDay(
                 Text(state.date.dayOfMonth.toString(), style = displayDate(m.dateSize))
                 Text(state.date.monthName(), style = displayDate(m.dateSize))
             }
-            if (state.load == LoadState.Ready && state.events.isNotEmpty()) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                ) {
-                    Box(Modifier.width(48.dp).height(1.dp).background(Paper.markOutline))
-                    Text(countLine(state.events.size), style = body(m.metaSize, Paper.inkTertiary))
-                }
-            }
+            Spacer(Modifier.weight(1f))
+            ComingUp(upcoming = state.upcoming, m = m)
         }
 
         DayBody(state, m, onToggleDone, Modifier.weight(1f))
@@ -290,7 +305,10 @@ private fun DayBody(
         is LoadState.Ready -> if (state.events.isEmpty()) {
             EmptyDay(m, modifier)
         } else {
-            Column(
+            // A day holds a handful of events, so a plain Column is enough — the
+            // need is scrolling, not virtualisation, and this keeps the list free
+            // of the unique-key requirement a LazyColumn would impose.
+            FadingColumn(
                 modifier = modifier.widthIn(max = m.columnMaxWidth),
                 verticalArrangement = Arrangement.spacedBy(m.cardGap),
             ) {
@@ -364,15 +382,101 @@ private fun LoadFailed(message: String, m: DayMetrics, modifier: Modifier = Modi
     }
 }
 
+/**
+ * Lead time, deliberately not cards. With nothing to act on and nothing to
+ * emphasise, a card reduces to a row — so this is a list, not a second card
+ * type. The name leads because that is what you recognise; the countdown is
+ * the detail, and it is relative because "in 5 days" is what you act on.
+ */
+@Composable
+private fun ComingUp(
+    upcoming: List<UpcomingEvent>,
+    m: DayMetrics,
+    modifier: Modifier = Modifier,
+) {
+    if (upcoming.isEmpty()) return
+
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(14.dp),
+    ) {
+        Rule()
+        Text("COMING UP", style = smallCaps(m.categoryLabelSize, Paper.inkLabel))
+        FadingColumn(
+            modifier = Modifier.heightIn(max = m.upcomingMaxHeight),
+            verticalArrangement = Arrangement.spacedBy(11.dp),
+        ) {
+            upcoming.forEach { next ->
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    CategoryIcon(
+                        category = next.event.category,
+                        tint = accentFor(next.event.category),
+                        size = m.upcomingIconSize,
+                        modifier = Modifier.padding(top = 2.dp),
+                    )
+                    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                        Text(
+                            text = next.event.name,
+                            style = body(m.secondarySize, Paper.inkSecondary),
+                        )
+                        Text(
+                            text = countdownLabel(next.daysAway),
+                            style = body(m.metaSize, Paper.inkTertiary),
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+/**
+ * A scrolling column that says so.
+ *
+ * Both scroll areas here are bounded, and both engage rarely — one day in a
+ * hundred on a desktop, one in twelve on a phone. Rare is what makes this
+ * necessary rather than optional: met once or twice a year with no prior
+ * experience of this app scrolling, hidden rows read as missing events, which
+ * is the failure removing the count cap was meant to prevent.
+ *
+ * A fade rather than a scrollbar: it works on every platform without an
+ * expect/actual seam, and a page softening at the fold suits the paper better
+ * than a stock control would. Bottom edge only — the header above already
+ * marks where the list starts.
+ */
+@Composable
+private fun FadingColumn(
+    modifier: Modifier = Modifier,
+    verticalArrangement: Arrangement.Vertical = Arrangement.Top,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    val scroll = rememberScrollState()
+    Box(modifier) {
+        Column(
+            modifier = Modifier.verticalScroll(scroll),
+            verticalArrangement = verticalArrangement,
+            content = content,
+        )
+        if (scroll.canScrollForward) {
+            Box(
+                Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth()
+                    .height(FADE_HEIGHT)
+                    .background(
+                        Brush.verticalGradient(listOf(Color.Transparent, Paper.ground)),
+                    ),
+            )
+        }
+    }
+}
+
+/** Enough to read as a soft edge rather than a band. */
+private val FADE_HEIGHT = 28.dp
+
 @Composable
 private fun Rule() {
     Spacer(Modifier.fillMaxWidth().height(1.dp).background(Paper.rule))
-}
-
-private fun countLine(n: Int): String = when (n) {
-    0 -> "Nothing today"
-    1 -> "One thing today"
-    else -> "$n things today"
 }
 
 internal fun smallCaps(
