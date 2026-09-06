@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -34,6 +35,8 @@ fun DevDateBar(
     onPreviousDay: () -> Unit,
     onNextDay: () -> Unit,
     onNextEventDay: () -> Unit,
+    onPreviousEventDay: () -> Unit,
+    onToday: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val mono = TextStyle(
@@ -59,10 +62,22 @@ fun DevDateBar(
                 color = Paper.inkTertiary,
             ),
         )
+        Step("« prev event", mono, metrics, onPreviousEventDay)
         Step("‹", mono, metrics, onPreviousDay)
         Text(date.toString(), modifier = Modifier.padding(horizontal = 4.dp), style = mono)
         Step("›", mono, metrics, onNextDay)
         Step("next event »", mono, metrics, onNextEventDay)
+        // Everything left of here moves relative to where you are; "today" is
+        // absolute. The rule says they are different kinds of thing without
+        // needing a different shape or colour.
+        Box(
+            Modifier
+                .padding(horizontal = 4.dp)
+                .width(1.dp)
+                .height(metrics.devSize.value.dp + 4.dp)
+                .background(Paper.inkFaint),
+        )
+        Step("today", mono, metrics, onToday)
     }
 }
 

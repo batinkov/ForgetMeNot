@@ -25,11 +25,11 @@ import kotlinx.datetime.plus
 class DayViewState(
     repository: EventRepository,
     scope: CoroutineScope,
-    initialDate: LocalDate,
+    private val today: () -> LocalDate,
 ) {
     private var all: List<ReminderEvent> = emptyList()
 
-    private val _state = MutableStateFlow(DayUiState(date = initialDate))
+    private val _state = MutableStateFlow(DayUiState(date = today()))
     val state: StateFlow<DayUiState> = _state.asStateFlow()
 
     init {
@@ -56,17 +56,28 @@ class DayViewState(
 
     fun showPreviousDay() = showDate(_state.value.date.minus(1, DateTimeUnit.DAY))
 
+    /**
+     * Back to the real today, read from the clock rather than remembered from
+     * startup — an app left open overnight would otherwise return to yesterday.
+     */
+    fun showToday() = showDate(today())
+
     fun showNextDay() = showDate(_state.value.date.plus(1, DateTimeUnit.DAY))
 
-    /** Most days are empty; without this, finding one to look at means a lot of clicking. */
-    fun showNextDayWithEvents() {
-        var date = _state.value.date.plus(1, DateTimeUnit.DAY)
+    /** Most days are empty; without these, finding one to look at means a lot of clicking. */
+    fun showNextDayWithEvents() = showNearestDayWithEvents(step = 1)
+
+    fun showPreviousDayWithEvents() = showNearestDayWithEvents(step = -1)
+
+    /** Walks a whole year in [step]-sized hops and stops on the first day that has something. */
+    private fun showNearestDayWithEvents(step: Int) {
+        var date = _state.value.date.plus(step, DateTimeUnit.DAY)
         repeat(DAYS_IN_LEAP_YEAR) {
             if (all.on(date).isNotEmpty()) {
                 showDate(date)
                 return
             }
-            date = date.plus(1, DateTimeUnit.DAY)
+            date = date.plus(step, DateTimeUnit.DAY)
         }
     }
 

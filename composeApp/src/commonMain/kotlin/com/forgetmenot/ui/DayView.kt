@@ -156,7 +156,10 @@ fun DayView(
     onPreviousDay: () -> Unit,
     onNextDay: () -> Unit,
     onNextEventDay: () -> Unit,
+    onPreviousEventDay: () -> Unit,
+    onToday: () -> Unit,
     onToggleDone: (ReminderEvent) -> Unit,
+    showDevTools: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
     BoxWithConstraints(modifier.fillMaxSize().background(Paper.ground)) {
@@ -177,13 +180,17 @@ fun DayView(
                     StackedDay(state, metrics, onToggleDone)
                 }
             }
-            DevDateBar(
-                date = state.date,
-                metrics = metrics,
-                onPreviousDay = onPreviousDay,
-                onNextDay = onNextDay,
-                onNextEventDay = onNextEventDay,
-            )
+            if (showDevTools) {
+                DevDateBar(
+                    date = state.date,
+                    metrics = metrics,
+                    onPreviousDay = onPreviousDay,
+                    onNextDay = onNextDay,
+                    onNextEventDay = onNextEventDay,
+                    onPreviousEventDay = onPreviousEventDay,
+                    onToday = onToday,
+                )
+            }
         }
     }
 }

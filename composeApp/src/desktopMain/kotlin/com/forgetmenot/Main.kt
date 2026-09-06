@@ -16,6 +16,9 @@ private const val WINDOW_HEIGHT_DP = 820f
 /** Set FORGETMENOT_UI_SCALE to override the detected scale, e.g. 1.4 or 2. */
 private const val SCALE_OVERRIDE_ENV = "FORGETMENOT_UI_SCALE"
 
+/** Set FORGETMENOT_DEV=1 to show the date bar. */
+private const val DEV_TOOLS_ENV = "FORGETMENOT_DEV"
+
 fun main() = application {
     val platformScale = platformScale()
     val uiScale = resolveUiScale(
@@ -33,6 +36,10 @@ fun main() = application {
         height = (WINDOW_HEIGHT_DP * ratio).dp,
     )
 
+    val devTools = devToolsEnabled(System.getenv(DEV_TOOLS_ENV))
+    if (devTools) {
+        println("ForgetMeNot: developer date bar on ($DEV_TOOLS_ENV)")
+    }
     if (uiScale != platformScale) {
         println("ForgetMeNot: UI scale $uiScale (platform reported $platformScale) — set $SCALE_OVERRIDE_ENV to change")
     }
@@ -42,7 +49,7 @@ fun main() = application {
         CompositionLocalProvider(
             LocalDensity provides Density(uiScale, platform.fontScale),
         ) {
-            App()
+            App(showDevTools = devTools)
         }
     }
 }

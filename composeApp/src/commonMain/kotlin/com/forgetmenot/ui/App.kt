@@ -18,13 +18,13 @@ import kotlinx.datetime.todayIn
  * to read bytes and never learns where they came from.
  */
 @Composable
-fun App() {
+fun App(showDevTools: Boolean) {
     val scope = rememberCoroutineScope()
     val day = remember {
         DayViewState(
             repository = JsonEventRepository(readBytes = { path -> Res.readBytes(path) }),
             scope = scope,
-            initialDate = Clock.System.todayIn(TimeZone.currentSystemDefault()),
+            today = { Clock.System.todayIn(TimeZone.currentSystemDefault()) },
         )
     }
     val state by day.state.collectAsState()
@@ -35,7 +35,10 @@ fun App() {
             onPreviousDay = day::showPreviousDay,
             onNextDay = day::showNextDay,
             onNextEventDay = day::showNextDayWithEvents,
+            onPreviousEventDay = day::showPreviousDayWithEvents,
+            onToday = day::showToday,
             onToggleDone = day::toggleDone,
+            showDevTools = showDevTools,
         )
     }
 }

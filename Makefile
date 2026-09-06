@@ -14,6 +14,10 @@ FLAGS  ?= --console=plain
 run:
 	$(GRADLE) $(MODULE):run $(FLAGS)
 
+## run-dev: launch the app with the developer date bar visible
+run-dev:
+	FORGETMENOT_DEV=1 $(GRADLE) $(MODULE):run $(FLAGS)
+
 ## test: run the unit tests for every configured target
 test:
 	$(GRADLE) $(MODULE):allTests $(FLAGS)
@@ -47,4 +51,4 @@ help:
 	@echo "ForgetMeNot — available targets:"
 	@grep -E '^## ' $(MAKEFILE_LIST) | sed 's/^## //' | awk -F': ' '{printf "  %-10s %s\n", $$1, $$2}'
 
-.PHONY: run test build dist run-dist package tasks clean help
+.PHONY: run run-dev test build dist run-dist package tasks clean help

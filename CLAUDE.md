@@ -25,6 +25,17 @@ A Compose Multiplatform day view for yearly recurring events. See
 `make test` runs the tests. Gradle is the source of truth — the Makefile is only
 aliases, so build behaviour belongs in `build.gradle.kts`, not there.
 
+### Developer date bar
+
+Off by default, so a packaged build cannot ship it by accident. Turn it on to
+step through dates while working:
+
+    FORGETMENOT_DEV=1 make run
+
+It accepts `1`, `true`, `yes` or `on`; anything else leaves it off. This is a
+runtime flag rather than a compile-time one because Kotlin Multiplatform has no
+BuildConfig — the dev code ships in the binary and is simply not drawn.
+
 ### Desktop UI scale
 
 Compose Desktop takes its density from the AWT graphics transform, which is the
