@@ -9,6 +9,10 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.atStartOfDayIn
+import kotlin.time.Duration.Companion.hours
+import kotlin.time.Duration.Companion.seconds
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -31,7 +35,21 @@ class DayViewStateTest {
         repository: EventRepository = object : EventRepository {
             override fun events(): Flow<List<ReminderEvent>> = flowOf(events)
         },
-    ) = DayViewState(repository, CoroutineScope(Dispatchers.Unconfined)) { on }
+    ) = DayViewState(
+        repository = repository,
+        scope = CoroutineScope(Dispatchers.Unconfined),
+        zone = TimeZone.UTC,
+        rollover = false,
+    ) { on.atStartOfDayIn(TimeZone.UTC) }
+
+    private fun holderAt(instant: kotlinx.datetime.Instant, zone: TimeZone) = DayViewState(
+        repository = object : EventRepository {
+            override fun events(): Flow<List<ReminderEvent>> = flowOf(calendar)
+        },
+        scope = CoroutineScope(Dispatchers.Unconfined),
+        zone = zone,
+        rollover = false,
+    ) { instant }
 
     @Test
     fun aLoadedCalendarLeavesTheViewReady() {
@@ -108,12 +126,92 @@ class DayViewStateTest {
                 override fun events(): Flow<List<ReminderEvent>> = flowOf(calendar)
             },
             scope = CoroutineScope(Dispatchers.Unconfined),
-        ) { now }
+            zone = TimeZone.UTC,
+            rollover = false,
+        ) { now.atStartOfDayIn(TimeZone.UTC) }
 
         assertEquals(LocalDate(2026, 6, 1), day.state.value.date)
         now = LocalDate(2026, 6, 2)
         day.showToday()
         assertEquals(LocalDate(2026, 6, 2), day.state.value.date)
+    }
+
+    @Test
+    fun theViewFollowsTheDateOverMidnight() {
+        var now = LocalDate(2026, 6, 1)
+        val day = DayViewState(
+            repository = object : EventRepository {
+                override fun events(): Flow<List<ReminderEvent>> = flowOf(calendar)
+            },
+            scope = CoroutineScope(Dispatchers.Unconfined),
+            zone = TimeZone.UTC,
+            rollover = false,
+        ) { now.atStartOfDayIn(TimeZone.UTC) }
+
+        now = LocalDate(2026, 6, 2)
+        day.refreshToday()
+        assertEquals(LocalDate(2026, 6, 2), day.state.value.date)
+    }
+
+    @Test
+    fun midnightDoesNotYankYouBackFromWhereYouNavigated() {
+        var now = LocalDate(2026, 6, 1)
+        val day = DayViewState(
+            repository = object : EventRepository {
+                override fun events(): Flow<List<ReminderEvent>> = flowOf(calendar)
+            },
+            scope = CoroutineScope(Dispatchers.Unconfined),
+            zone = TimeZone.UTC,
+            rollover = false,
+        ) { now.atStartOfDayIn(TimeZone.UTC) }
+
+        day.showNextDayWithEvents()
+        assertEquals(LocalDate(2026, 6, 29), day.state.value.date)
+        now = LocalDate(2026, 6, 2)
+        day.refreshToday()
+        assertEquals(LocalDate(2026, 6, 29), day.state.value.date)
+    }
+
+    @Test
+    fun aDayThatHasNotChangedIsLeftAlone() {
+        val day = holder(on = LocalDate(2026, 6, 29))
+        day.toggleDone(day.state.value.events.single())
+        day.refreshToday()
+        assertEquals(1, day.state.value.done.size, "refresh must not clear done on the same day")
+    }
+
+    @Test
+    fun theNightlyWakeLandsJustAfterMidnight() {
+        val elevenPm = LocalDate(2026, 6, 1).atStartOfDayIn(TimeZone.UTC) + 23.hours
+        val day = DayViewState(
+            repository = object : EventRepository {
+                override fun events(): Flow<List<ReminderEvent>> = flowOf(calendar)
+            },
+            scope = CoroutineScope(Dispatchers.Unconfined),
+            zone = TimeZone.UTC,
+            rollover = false,
+        ) { elevenPm }
+
+        // An hour to midnight, plus a second so the clock has certainly ticked over.
+        assertEquals(1.hours + 1.seconds, day.untilNextMidnight())
+    }
+
+    @Test
+    fun atMidnightItWaitsAWholeDayRatherThanSpinning() {
+        // Returning ~0 here would make the loop wake continuously.
+        val midnight = LocalDate(2026, 6, 1).atStartOfDayIn(TimeZone.UTC)
+        assertEquals(24.hours + 1.seconds, holderAt(midnight, TimeZone.UTC).untilNextMidnight())
+    }
+
+    @Test
+    fun theDelayFollowsTheZoneNotUtc() {
+        // 23:00 UTC on 1 June is already 02:00 on the 2nd in Sofia (UTC+3 in
+        // summer), so Sofia has 22 hours left to run while UTC has one. A
+        // zone-blind implementation would give both the same answer.
+        val elevenPmUtc = LocalDate(2026, 6, 1).atStartOfDayIn(TimeZone.UTC) + 23.hours
+        val sofia = TimeZone.of("Europe/Sofia")
+        assertEquals(1.hours + 1.seconds, holderAt(elevenPmUtc, TimeZone.UTC).untilNextMidnight())
+        assertEquals(22.hours + 1.seconds, holderAt(elevenPmUtc, sofia).untilNextMidnight())
     }
 
     @Test

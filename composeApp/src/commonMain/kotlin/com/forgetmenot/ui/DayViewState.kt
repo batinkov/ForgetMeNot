@@ -5,6 +5,8 @@ import com.forgetmenot.domain.ReminderEvent
 import com.forgetmenot.domain.on
 import com.forgetmenot.domain.upcoming
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -14,7 +16,12 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.minus
+import kotlinx.datetime.Instant
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.atStartOfDayIn
 import kotlinx.datetime.plus
+import kotlinx.datetime.toLocalDateTime
+import kotlin.time.Duration
 
 /**
  * Holds what the day view shows and how it changes.
@@ -26,14 +33,33 @@ import kotlinx.datetime.plus
 class DayViewState(
     repository: EventRepository,
     scope: CoroutineScope,
-    private val today: () -> LocalDate,
+    private val zone: TimeZone = TimeZone.currentSystemDefault(),
+    private val rollover: Boolean = true,
+    private val now: () -> Instant,
 ) {
+    private fun today(): LocalDate = now().toLocalDateTime(zone).date
+
+    /** What the view currently believes "today" is, so it can notice when that changes. */
+    private var believedToday: LocalDate = today()
     private var all: List<ReminderEvent> = emptyList()
 
     private val _state = MutableStateFlow(DayUiState(date = today()))
     val state: StateFlow<DayUiState> = _state.asStateFlow()
 
     init {
+        // One wake a night. The trigger that matters is regaining focus, since
+        // staleness is only visible to someone looking; this covers the one case
+        // focus cannot — a window left focused and untouched across midnight.
+        // Suspending through it makes the delay fire late, by which point focus
+        // has already corrected the date and this is a harmless no-op.
+        if (rollover) {
+            scope.launch {
+                while (isActive) {
+                    delay(untilNextMidnight())
+                    refreshToday()
+                }
+            }
+        }
         scope.launch {
             repository.events()
                 .catch { cause ->
@@ -74,6 +100,19 @@ class DayViewState(
      */
     fun showToday() = showDate(today())
 
+    /**
+     * Moves the view onto the new day when the date has changed underneath it —
+     * but only if it was still sitting on today. Someone who has navigated
+     * elsewhere should not be yanked back at midnight.
+     */
+    fun refreshToday() {
+        val now = today()
+        if (now == believedToday) return
+        val wasShowingToday = _state.value.date == believedToday
+        believedToday = now
+        if (wasShowingToday) showDate(now)
+    }
+
     fun showNextDay() = showDate(_state.value.date.plus(1, DateTimeUnit.DAY))
 
     /** Most days are empty; without these, finding one to look at means a lot of clicking. */
@@ -99,7 +138,17 @@ class DayViewState(
         }
     }
 
+    internal fun untilNextMidnight(): Duration {
+        val instant = now()
+        val nextMidnight = instant.toLocalDateTime(zone).date
+            .plus(1, DateTimeUnit.DAY)
+            .atStartOfDayIn(zone)
+        // A second past, so the clock has certainly ticked over when we look.
+        return (nextMidnight - instant) + ONE_SECOND
+    }
+
     private companion object {
         const val DAYS_IN_LEAP_YEAR = 366
+        val ONE_SECOND: Duration = kotlin.time.Duration.parse("1s")
     }
 }
