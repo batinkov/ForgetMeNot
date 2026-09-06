@@ -38,10 +38,17 @@ class EventLabelsTest {
     }
 
     @Test
-    fun publicCategoriesNeverShowANumber() {
-        assertNull(event(EventCategory.NAMEDAY, 1900).countLabel(day))
-        assertNull(event(EventCategory.FEAST, 1900).countLabel(day))
-        assertNull(event(EventCategory.NATIONAL_DAY, 1878).countLabel(day))
+    fun everyOtherCategoryCountsElapsedYearsWhenItHasOne() {
+        assertEquals("141 years", event(EventCategory.NATIONAL_DAY, 1885).countLabel(day))
+        assertEquals("126 years", event(EventCategory.FEAST, 1900).countLabel(day))
+        assertEquals("5 years", event(EventCategory.CUSTOM, 2021).countLabel(day))
+    }
+
+    @Test
+    fun aCategoryWithNoYearInTheDataStaysQuiet() {
+        // Namedays and most feasts have no origin year, so they say nothing.
+        assertNull(event(EventCategory.NAMEDAY).countLabel(day))
+        assertNull(event(EventCategory.FEAST).countLabel(day))
     }
 
     @Test
@@ -50,19 +57,10 @@ class EventLabelsTest {
     }
 
     @Test
-    fun theSecondaryLineFallsBackToTheNote() {
-        val nameday = event(EventCategory.NAMEDAY, note = "Atanas · Nasko")
-        assertEquals("Atanas · Nasko", nameday.secondaryLine(day))
-    }
-
-    @Test
-    fun theNumberWinsOverTheNoteWhenBothExist() {
-        val birthday = event(EventCategory.BIRTHDAY, originalYear = 1992, note = "buy flowers")
-        assertEquals("Turning 34", birthday.secondaryLine(day))
-    }
-
-    @Test
-    fun aBareEventHasNoSecondaryLine() {
-        assertNull(event(EventCategory.CUSTOM).secondaryLine(day))
+    fun aNumberAndANoteCoexistRatherThanCompeting() {
+        // Съединението has both; showing only the number would lose the better half.
+        val unification = event(EventCategory.NATIONAL_DAY, 1885, note = "Източна Румелия…")
+        assertEquals("141 years", unification.countLabel(day))
+        assertEquals("Източна Румелия…", unification.note)
     }
 }

@@ -9,10 +9,11 @@ A Compose Multiplatform day view for yearly recurring events. See
   `status`, `diff`, `show`. Staging, committing, pushing, branching, remotes and
   config are run by the developer. Enforced by deny rules in
   `.claude/settings.json`; Claude writes commit messages but never commits.
-- **Never install anything.** No package managers, no global tooling, and no new
-  project dependencies — adding a line to `gradle/libs.versions.toml` or a
-  `build.gradle.kts` counts as installing. Say what is needed and why; the
-  developer applies it.
+- **Never install anything.** No package managers, no global tooling, no fetching
+  artifacts. A new project dependency is the developer's decision: Claude
+  proposes it with reasons, and edits `gradle/libs.versions.toml` /
+  `build.gradle.kts` only when asked to. Resolving it — running the build that
+  downloads it — is always the developer's.
 - **Agree the work before writing it.** Anything carrying a design decision gets
   settled in conversation first. Asking is preferred to guessing.
 - **Push back.** If there is a better approach, say so rather than building the

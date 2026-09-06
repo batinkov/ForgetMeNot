@@ -19,12 +19,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
-import com.forgetmenot.domain.ReminderEvent
-import com.forgetmenot.domain.on
-import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
-import kotlinx.datetime.minus
-import kotlinx.datetime.plus
 
 /**
  * Scaffolding, not design. Most days have nothing on them, so without a way to
@@ -34,10 +29,11 @@ import kotlinx.datetime.plus
  */
 @Composable
 fun DevDateBar(
-    today: LocalDate,
-    allEvents: List<ReminderEvent>,
+    date: LocalDate,
     metrics: DayMetrics,
-    onDateChange: (LocalDate) -> Unit,
+    onPreviousDay: () -> Unit,
+    onNextDay: () -> Unit,
+    onNextEventDay: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val mono = TextStyle(
@@ -63,10 +59,10 @@ fun DevDateBar(
                 color = Paper.inkTertiary,
             ),
         )
-        Step("‹", mono, metrics) { onDateChange(today.minus(1, DateTimeUnit.DAY)) }
-        Text(today.toString(), modifier = Modifier.padding(horizontal = 4.dp), style = mono)
-        Step("›", mono, metrics) { onDateChange(today.plus(1, DateTimeUnit.DAY)) }
-        Step("next event »", mono, metrics) { onDateChange(nextDayWithEvents(allEvents, today)) }
+        Step("‹", mono, metrics, onPreviousDay)
+        Text(date.toString(), modifier = Modifier.padding(horizontal = 4.dp), style = mono)
+        Step("›", mono, metrics, onNextDay)
+        Step("next event »", mono, metrics, onNextEventDay)
     }
 }
 
@@ -88,14 +84,4 @@ private fun Step(
     ) {
         Text(label, style = style)
     }
-}
-
-/** The next date within a year that has anything on it; [from] if the year is empty. */
-private fun nextDayWithEvents(events: List<ReminderEvent>, from: LocalDate): LocalDate {
-    var date = from.plus(1, DateTimeUnit.DAY)
-    repeat(366) {
-        if (events.on(date).isNotEmpty()) return date
-        date = date.plus(1, DateTimeUnit.DAY)
-    }
-    return from
 }

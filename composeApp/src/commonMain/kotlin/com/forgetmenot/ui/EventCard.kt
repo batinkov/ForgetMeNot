@@ -33,7 +33,7 @@ import androidx.compose.ui.unit.dp
 import com.forgetmenot.domain.EventCategory
 import com.forgetmenot.domain.ReminderEvent
 import com.forgetmenot.domain.label
-import com.forgetmenot.domain.secondaryLine
+import com.forgetmenot.domain.countLabel
 import kotlinx.datetime.LocalDate
 
 /**
@@ -93,14 +93,28 @@ fun EventCard(
                     color = nameInkFor(event.category),
                 ),
             )
-            event.secondaryLine(today)?.let { line ->
+            // Number and note are separate lines rather than either/or: a national
+            // day can have both, and dropping the note to show "141 years" would
+            // lose the more interesting half.
+            event.countLabel(today)?.let { count ->
                 Text(
-                    text = line,
+                    text = count,
                     style = TextStyle(
                         fontFamily = FontFamily.SansSerif,
                         fontSize = metrics.secondarySize,
                         lineHeight = metrics.secondarySize * 1.5f,
                         color = secondaryInkFor(event.category),
+                    ),
+                )
+            }
+            event.note.takeIf { it.isNotBlank() }?.let { note ->
+                Text(
+                    text = note,
+                    style = TextStyle(
+                        fontFamily = FontFamily.SansSerif,
+                        fontSize = metrics.secondarySize,
+                        lineHeight = metrics.secondarySize * 1.5f,
+                        color = Paper.inkTertiary,
                     ),
                 )
             }

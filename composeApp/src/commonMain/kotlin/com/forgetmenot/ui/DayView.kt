@@ -144,22 +144,21 @@ data class DayMetrics(
 }
 
 /**
- * The day view: everything happening on [today], and nothing else.
+ * The day view: everything happening on the shown date, and nothing else.
  *
- * "Done" is held here rather than inside each card, and keyed on [today], so it
- * resets when the day changes — which is the correct lifetime for it, and
- * leaves one place to persist it later.
+ * A pure function of [state] — it holds no state of its own, so every screen it
+ * can show (loading, failed, empty, a full day, all done) can be produced by
+ * handing it a value.
  */
 @Composable
 fun DayView(
-    allEvents: List<ReminderEvent>,
-    today: LocalDate,
-    onDateChange: (LocalDate) -> Unit,
+    state: DayUiState,
+    onPreviousDay: () -> Unit,
+    onNextDay: () -> Unit,
+    onNextEventDay: () -> Unit,
+    onToggleDone: (ReminderEvent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val events = remember(allEvents, today) { allEvents.on(today) }
-    var done by remember(today) { mutableStateOf(emptySet<ReminderEvent>()) }
-
     BoxWithConstraints(modifier.fillMaxSize().background(Paper.ground)) {
         val metrics = when {
             maxWidth < 600.dp -> DayMetrics.Compact
@@ -170,23 +169,20 @@ fun DayView(
         // width for two comfortable columns, which is more than Expanded's floor.
         val useRail = maxWidth >= 1000.dp
 
-        val toggle: (ReminderEvent) -> Unit = { e ->
-            done = if (e in done) done - e else done + e
-        }
-
         Column(Modifier.fillMaxSize()) {
             Box(Modifier.weight(1f)) {
                 if (useRail) {
-                    RailDay(events, today, metrics, done, toggle)
+                    RailDay(state, metrics, onToggleDone)
                 } else {
-                    StackedDay(events, today, metrics, done, toggle)
+                    StackedDay(state, metrics, onToggleDone)
                 }
             }
             DevDateBar(
-                today = today,
-                allEvents = allEvents,
+                date = state.date,
                 metrics = metrics,
-                onDateChange = onDateChange,
+                onPreviousDay = onPreviousDay,
+                onNextDay = onNextDay,
+                onNextEventDay = onNextEventDay,
             )
         }
     }
@@ -195,11 +191,9 @@ fun DayView(
 /** Phone and tablet: date on top, one centred column beneath. */
 @Composable
 private fun StackedDay(
-    events: List<ReminderEvent>,
-    today: LocalDate,
+    state: DayUiState,
     m: DayMetrics,
-    done: Set<ReminderEvent>,
-    onToggle: (ReminderEvent) -> Unit,
+    onToggleDone: (ReminderEvent) -> Unit,
 ) {
     val measure = Modifier.widthIn(max = m.columnMaxWidth + m.screenPadding * 2).fillMaxWidth()
 
@@ -213,37 +207,29 @@ private fun StackedDay(
                 .padding(top = m.topPadding, bottom = 18.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            Text(today.weekdayName(), style = smallCaps(m.weekdaySize, Paper.inkLabel))
-            Text(today.dayAndMonth(), style = displayDate(m.dateSize))
+            Text(state.date.weekdayName(), style = smallCaps(m.weekdaySize, Paper.inkLabel))
+            Text(state.date.dayAndMonth(), style = displayDate(m.dateSize))
         }
 
         Box(measure.padding(horizontal = m.screenPadding)) { Rule() }
 
-        if (events.isEmpty()) {
-            EmptyDay(m, Modifier.weight(1f))
-        } else {
-            Column(
-                modifier = measure
-                    .weight(1f)
-                    .padding(horizontal = m.screenPadding, vertical = 22.dp),
-                verticalArrangement = Arrangement.spacedBy(m.cardGap),
-            ) {
-                events.forEach { event ->
-                    EventCard(event, today, m, event in done, onToggle = { onToggle(event) })
-                }
-            }
-        }
+        DayBody(
+            state = state,
+            m = m,
+            onToggleDone = onToggleDone,
+            modifier = measure
+                .weight(1f)
+                .padding(horizontal = m.screenPadding, vertical = 22.dp),
+        )
     }
 }
 
 /** Wide screens: the date becomes a masthead in a left rail, events to its right. */
 @Composable
 private fun RailDay(
-    events: List<ReminderEvent>,
-    today: LocalDate,
+    state: DayUiState,
     m: DayMetrics,
-    done: Set<ReminderEvent>,
-    onToggle: (ReminderEvent) -> Unit,
+    onToggleDone: (ReminderEvent) -> Unit,
 ) {
     Row(
         modifier = Modifier
@@ -260,30 +246,55 @@ private fun RailDay(
                 style = smallCaps(m.brandSize, Paper.inkFaint, FontWeight.Bold, 0.19),
             )
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                Text(today.weekdayName(), style = smallCaps(m.weekdaySize, Paper.inkLabel))
-                Text(today.dayOfMonth.toString(), style = displayDate(m.dateSize))
-                Text(today.monthName(), style = displayDate(m.dateSize))
+                Text(state.date.weekdayName(), style = smallCaps(m.weekdaySize, Paper.inkLabel))
+                Text(state.date.dayOfMonth.toString(), style = displayDate(m.dateSize))
+                Text(state.date.monthName(), style = displayDate(m.dateSize))
             }
-            if (events.isNotEmpty()) {
+            if (state.load == LoadState.Ready && state.events.isNotEmpty()) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
                     Box(Modifier.width(48.dp).height(1.dp).background(Paper.markOutline))
-                    Text(countLine(events.size), style = body(m.metaSize, Paper.inkTertiary))
+                    Text(countLine(state.events.size), style = body(m.metaSize, Paper.inkTertiary))
                 }
             }
         }
 
-        if (events.isEmpty()) {
-            EmptyDay(m, Modifier.weight(1f))
+        DayBody(state, m, onToggleDone, Modifier.weight(1f))
+    }
+}
+
+/**
+ * The four things a day can be. Loading renders nothing at all rather than
+ * "Nothing today": the read is near-instant, and flashing the empty state on
+ * the way to a full day would be worse than a blank moment.
+ */
+@Composable
+private fun DayBody(
+    state: DayUiState,
+    m: DayMetrics,
+    onToggleDone: (ReminderEvent) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    when (val load = state.load) {
+        is LoadState.Loading -> Box(modifier)
+        is LoadState.Failed -> LoadFailed(load.message, m, modifier)
+        is LoadState.Ready -> if (state.events.isEmpty()) {
+            EmptyDay(m, modifier)
         } else {
             Column(
-                modifier = Modifier.weight(1f).widthIn(max = m.columnMaxWidth),
+                modifier = modifier.widthIn(max = m.columnMaxWidth),
                 verticalArrangement = Arrangement.spacedBy(m.cardGap),
             ) {
-                events.forEach { event ->
-                    EventCard(event, today, m, event in done, onToggle = { onToggle(event) })
+                state.events.forEach { event ->
+                    EventCard(
+                        event = event,
+                        today = state.date,
+                        metrics = m,
+                        isDone = event in state.done,
+                        onToggle = { onToggleDone(event) },
+                    )
                 }
             }
         }
@@ -319,6 +330,30 @@ private fun EmptyDay(m: DayMetrics, modifier: Modifier = Modifier) {
                 color = Paper.inkSecondary,
             ),
         )
+    }
+}
+
+/**
+ * Said plainly, and without the empty state's ornament — this is not a calm
+ * day with nothing on it, it is the app admitting it could not look.
+ */
+@Composable
+private fun LoadFailed(message: String, m: DayMetrics, modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier.fillMaxSize().padding(bottom = 48.dp, start = 24.dp, end = 24.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp, Alignment.CenterVertically),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Text(
+            text = "Couldn't read the calendar",
+            style = TextStyle(
+                fontFamily = FontFamily.Serif,
+                fontSize = m.emptySize,
+                fontWeight = FontWeight.Light,
+                color = Paper.inkSecondary,
+            ),
+        )
+        Text(text = message, style = body(m.metaSize, Paper.inkTertiary))
     }
 }
 
