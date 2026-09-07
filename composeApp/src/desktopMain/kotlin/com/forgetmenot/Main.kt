@@ -44,7 +44,12 @@ fun main() = application {
         println("ForgetMeNot: UI scale $uiScale (platform reported $platformScale) — set $SCALE_OVERRIDE_ENV to change")
     }
 
-    Window(onCloseRequest = ::exitApplication, state = state, title = "ForgetMeNot") {
+    Window(
+        onCloseRequest = ::exitApplication,
+        state = state,
+        title = "ForgetMeNot",
+        icon = ForgetMeNotIcon,
+    ) {
         val platform = LocalDensity.current
         CompositionLocalProvider(
             LocalDensity provides Density(uiScale, platform.fontScale),
